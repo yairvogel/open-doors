@@ -1,7 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using OpenDoors.Model;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddDbContext<OpenDoorsContext>(options =>
+    {
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var dbPath = Path.Join(localAppData, "opendoors.db");
+        options.UseSqlite($"Data Source={dbPath}");
+    }
+);
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -19,24 +28,16 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", () =>
+app.MapPost("/users", async (User user, OpenDoorsContext dbContext) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
+    await dbContext.AddAsync(user);
+    await dbContext.SaveChangesAsync();
 })
-.WithName("GetWeatherForecast")
+.WithName("Create User")
+.WithOpenApi();
+
+app.MapGet("/users", (OpenDoorsContext dbContext) => dbContext.Users.ToListAsync())
+.WithName("Get Users")
 .WithOpenApi();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
