@@ -1,21 +1,17 @@
 
 namespace OpenDoors.Model;
 
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-public class OpenDoorsContext : DbContext
+class OpenDoorsContext(DbContextOptions options) : IdentityDbContext(options)
 {
-    public DbSet<User> Users { get; set; }
-
-    public OpenDoorsContext(DbContextOptions options)
-        : base(options)
-    {
-    }
+    public DbSet<Door> Doors { get; set; }
 }
 
-public class User
+public class Door
 {
     public int Id { get; set; }
 
-    public string Name { get; set; }
+    public string Location { get; set; }
 }
