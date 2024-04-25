@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenDoors.Model;
+using OpenDoors.Model.Authentication;
+using OpenDoors.Service.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,27 +16,29 @@ builder.Services.AddDbContext<OpenDoorsContext>(options =>
 
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-});
 
-builder.Services.AddIdentityCore<IdentityUser>()
+builder.Services.AddAuthorizationBuilder();
+
+builder.Services.AddIdentityCore<TenantUser>()
     .AddEntityFrameworkStores<OpenDoorsContext>()
     .AddApiEndpoints();
+
+builder.Services.AddScoped<TenantManager>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
+builder.Services.AddControllers();
 
-app.MapIdentityApi<IdentityUser>();
+var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.MapControllers();
 
 app.MapPost("/doors", async (Door door, OpenDoorsContext dbContext) =>
 {
