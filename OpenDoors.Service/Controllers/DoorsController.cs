@@ -11,7 +11,7 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
 {
     [HttpPost]
     [Route("/doors")]
-    [Authorize(Policy = AuthorizationConstants.TenantAdminPolicy)]
+    [Authorize(AuthorizationConstants.TenantAdminPolicy)]
     public async Task<IActionResult> CreateDoor([FromBody] CreateDoorRequest createDoorRequest)
     {
         Guid tenantId = HttpContext.User.GetTenantId();
@@ -21,12 +21,11 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
 
     [HttpGet]
     [Route("/doors")]
-    [Authorize(Policy = "Test")]
+    [Authorize(AuthorizationConstants.HasTenantPolicy)]
     public async Task<IActionResult> ListDoors()
     {
-        Guid tenantId = HttpContext.User.GetTenantId();
         string userId = HttpContext.User.GetUserId();
-        IReadOnlyList<Door> doors = await doorHandler.ListDoorsForUser(userId, tenantId);
+        IReadOnlyList<Door> doors = await doorHandler.ListDoorsForUser(userId);
         IReadOnlyList<DoorDto> doorDtos = doors.Select(d => new DoorDto(d.Id, d.Location)).ToList();
         return Ok(doorDtos);
     }
@@ -34,7 +33,3 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
 
 public record CreateDoorRequest(string location);
 public record DoorDto(int Id, string Location);
-
-public class DoorRepository(OpenDoorsContext dbContext)
-{
-}

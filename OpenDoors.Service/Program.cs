@@ -6,6 +6,8 @@ using OpenDoors.Service;
 using OpenDoors.Service.Authorization;
 using OpenDoors.Service.Controllers;
 using OpenDoors.Service.Handlers;
+using OpenDoors.Service.Interfaces;
+using OpenDoors.Service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,12 +28,11 @@ builder.Services.AddIdentityCore<TenantUser>()
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 
-builder.Services.AddScoped<DoorRepository>();
 builder.Services.AddScoped<DoorHandler>();
 
 builder.Services.AddAuthorizationPolicies();
 
-builder.Services.AddScoped<TenantManager>();
+builder.Services.AddScoped<ITenantManager, TenantManager>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

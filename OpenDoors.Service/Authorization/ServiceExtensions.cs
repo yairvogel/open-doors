@@ -10,9 +10,7 @@ public static class ServiceExtensions
             .AddPolicy(AuthorizationConstants.TenantAdminPolicy,
                     policy => policy
                         .RequireRole(AuthorizationConstants.AdminRole)
-                        .RequireClaim(AuthorizationConstants.TenantClaimType))
-            .AddPolicy("Test",
-                    policy => policy.AddRequirements(new AllowedEntryRequirement()));
+                        .RequireClaim(AuthorizationConstants.TenantClaimType));
         return services;
     }
 }

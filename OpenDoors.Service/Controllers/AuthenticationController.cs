@@ -2,13 +2,15 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using OpenDoors.Model;
 using OpenDoors.Model.Authentication;
 using OpenDoors.Service.Authorization;
+using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Controllers;
 
 [ApiController]
-public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, TenantManager tenantManager, RoleManager<TenantRole> roleManager) : ControllerBase
+public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, ITenantManager tenantManager) : ControllerBase
 {
     private static readonly EmailAddressAttribute _emailValidator = new();
 
@@ -17,6 +19,7 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
         string email = registerRequest.Email;
+
         if (string.IsNullOrEmpty(email) || !_emailValidator.IsValid(email))
         {
             return BadRequest($"email {email} is not a valid email address");
@@ -28,10 +31,9 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
         }
 
         Tenant? tenant = await tenantManager.GetByNameAsync(registerRequest.Tenant);
-        if (tenant is null)
+        if (tenant == null)
         {
             tenant = await tenantManager.CreateAsync(new Tenant { Name = registerRequest.Tenant });
-            await roleManager.CreateAsync(new TenantRole { Name = AuthorizationConstants.AdminRole, Tenant = tenant });
         }
 
         TenantUser user = new TenantUser
@@ -46,6 +48,9 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
         {
             return BadRequest(result.Errors.ToList());
         }
+
+        AccessGroup defaultAccessGroup = await tenantManager.GetDefaultAccessGroup(tenant.Id!.Value);
+        await tenantManager.AddUserToAccessGroup(user, defaultAccessGroup);
 
         await userManager.AddClaimAsync(user, new Claim(AuthorizationConstants.TenantClaimType, tenant.Id.ToString()!));
         if (registerRequest.Admin)

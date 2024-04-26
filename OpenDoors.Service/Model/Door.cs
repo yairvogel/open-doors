@@ -1,6 +1,3 @@
-
-using OpenDoors.Model.Authentication;
-
 namespace OpenDoors.Model;
 
 public class Door
@@ -9,6 +6,6 @@ public class Door
 
     public required string Location { get; set; }
 
-    public required Tenant Tenant { get; set; }
+    public required ICollection<AccessGroup> AccessGroups { get; set; } = [];
 }
 
