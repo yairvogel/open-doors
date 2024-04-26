@@ -5,6 +5,7 @@ using OpenDoors.Model.Authentication;
 using OpenDoors.Service;
 using OpenDoors.Service.Authorization;
 using OpenDoors.Service.Controllers;
+using OpenDoors.Service.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 

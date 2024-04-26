@@ -9,8 +9,8 @@ public static class UserExtensions
         return Guid.Parse(user.FindFirst(AuthorizationConstants.TenantClaimType)!.Value);
     }
 
-    public static Guid GetUserId(this ClaimsPrincipal user)
+    public static string GetUserId(this ClaimsPrincipal user)
     {
-        return Guid.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        return user.FindFirst(ClaimTypes.NameIdentifier)!.Value;
     }
 }
