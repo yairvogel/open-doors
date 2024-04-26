@@ -1,12 +1,14 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OpenDoors.Model.Authentication;
+using OpenDoors.Service.Authorization;
 
 namespace OpenDoors.Service.Controllers;
 
 [ApiController]
-public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, TenantManager tenantManager) : ControllerBase
+public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, TenantManager tenantManager, RoleManager<TenantRole> roleManager) : ControllerBase
 {
     private static readonly EmailAddressAttribute _emailValidator = new();
 
@@ -20,10 +22,16 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
             return BadRequest($"email {email} is not a valid email address");
         }
 
+        if (string.IsNullOrEmpty(registerRequest.Tenant))
+        {
+            return BadRequest("tenant is required");
+        }
+
         Tenant? tenant = await tenantManager.GetByNameAsync(registerRequest.Tenant);
         if (tenant is null)
         {
             tenant = await tenantManager.CreateAsync(new Tenant { Name = registerRequest.Tenant });
+            await roleManager.CreateAsync(new TenantRole { Name = AuthorizationConstants.AdminRole, Tenant = tenant });
         }
 
         TenantUser user = new TenantUser
@@ -34,9 +42,18 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
         };
 
         IdentityResult result = await userManager.CreateAsync(user, registerRequest.Password);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors.ToList());
+        }
 
+        await userManager.AddClaimAsync(user, new Claim(AuthorizationConstants.TenantClaimType, tenant.Id.ToString()!));
+        if (registerRequest.Admin)
+        {
+            await userManager.AddToRoleAsync(user, AuthorizationConstants.AdminRole);
+        }
 
-        return result.Succeeded ? Ok() : BadRequest(result.Errors.ToList());
+        return Ok();
     }
 
     [HttpPost]
@@ -56,6 +73,6 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
     }
 }
 
-public record RegisterRequest(string Email, string Password, string Tenant);
+public record RegisterRequest(string Email, string Password, string Tenant, bool Admin = false);
 
 public record LoginRequest(string Email, string Password);

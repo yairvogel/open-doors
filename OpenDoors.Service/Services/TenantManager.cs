@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using OpenDoors.Model;
 using OpenDoors.Model.Authentication;
 
 namespace OpenDoors.Service.Controllers;
@@ -15,7 +14,13 @@ public class TenantManager(OpenDoorsContext dbContext)
 
     public async Task<Tenant> CreateAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
-        await dbContext.Tenants.AddAsync(tenant, cancellationToken);
+        var existingTenant = await GetByNameAsync(tenant.Name!);
+        if (existingTenant != null)
+        {
+            return tenant;
+        }
+
+        await dbContext.AddAsync(tenant, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
         return tenant;
     }

@@ -4,12 +4,20 @@ using Microsoft.AspNetCore.Identity;
 
 public class TenantUser : IdentityUser
 {
-    public required Tenant Tenant { get; set; }
+    public required Tenant Tenant { get; set; } = null!;
+}
+
+public class TenantRole : IdentityRole
+{
+    public required Tenant Tenant { get; set; } = null!;
 }
 
 public class Tenant
 {
-    public int Id { get; set; }
+    public Guid? Id { get; set; }
 
     public string? Name { get; set; }
+
+    ICollection<TenantUser> Tenants { get; } = new List<TenantUser>();
 }
+

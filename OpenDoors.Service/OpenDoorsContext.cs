@@ -1,20 +1,14 @@
 
-namespace OpenDoors.Model;
+namespace OpenDoors.Service;
 
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using OpenDoors.Model;
 using OpenDoors.Model.Authentication;
 
-public class OpenDoorsContext(DbContextOptions options) : IdentityDbContext<TenantUser>(options)
+public class OpenDoorsContext(DbContextOptions options) : IdentityDbContext<TenantUser, TenantRole, string>(options)
 {
     public DbSet<Tenant> Tenants { get; set; } = null!;
 
     public DbSet<Door> Doors { get; set; } = null!;
-}
-
-public class Door
-{
-    public int Id { get; set; }
-
-    public string? Location { get; set; }
 }

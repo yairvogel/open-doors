@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using OpenDoors.Model;
 using OpenDoors.Model.Authentication;
+using OpenDoors.Service;
+using OpenDoors.Service.Authorization;
 using OpenDoors.Service.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,17 +12,23 @@ builder.Services.AddDbContext<OpenDoorsContext>(options =>
 {
     string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
     string dbPath = Path.Join(localAppData, "opendoors.db");
-    options.UseInMemoryDatabase("opendoors"); // ($"Data Source={dbPath}");
+    options.UseSqlite($"Data Source={dbPath}");
 });
+
+builder.Services.AddSingleton<IAuthorizationHandler, AllowedEntryHandler>();
+
+builder.Services.AddIdentityCore<TenantUser>()
+    .AddRoles<TenantRole>()
+    .AddEntityFrameworkStores<OpenDoorsContext>()
+    .AddApiEndpoints(); // TODO: do I need this?
 
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 
-builder.Services.AddAuthorizationBuilder();
+builder.Services.AddScoped<DoorRepository>();
+builder.Services.AddScoped<DoorHandler>();
 
-builder.Services.AddIdentityCore<TenantUser>()
-    .AddEntityFrameworkStores<OpenDoorsContext>()
-    .AddApiEndpoints();
+builder.Services.AddAuthorizationPolicies();
 
 builder.Services.AddScoped<TenantManager>();
 
@@ -32,26 +39,12 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
-
-app.MapPost("/doors", async (Door door, OpenDoorsContext dbContext) =>
-{
-    await dbContext.AddAsync(door);
-    await dbContext.SaveChangesAsync();
-})
-.RequireAuthorization()
-.WithName("Create Door")
-.WithOpenApi();
-
-app.MapGet("/doors", (OpenDoorsContext dbContext) => dbContext.Doors.ToListAsync())
-.RequireAuthorization()
-.WithName("Get Doors")
-.WithOpenApi();
 
 app.Run();
