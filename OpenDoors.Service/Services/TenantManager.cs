@@ -26,21 +26,5 @@ public class TenantManager(OpenDoorsContext dbContext, RoleManager<TenantRole> r
         await dbContext.SaveChangesAsync(cancellationToken);
         return tenant;
     }
-
-    public async Task<AccessGroup> GetDefaultAccessGroup(Guid tenantId, CancellationToken cancellationToken = default)
-    {
-        return await dbContext.AccessGroups.Where(g => g.Tenant.Id == tenantId).Where(g => g.Name == "default").FirstAsync(cancellationToken);
-    }
-
-    public Task<AccessGroup?> GetAccessGroup(Guid accessGroupId, CancellationToken cancellationToken = default)
-    {
-        return dbContext.AccessGroups.Where(g => g.Id == accessGroupId).FirstOrDefaultAsync(cancellationToken);
-    }
-
-    public async Task AddUserToAccessGroup(TenantUser user, AccessGroup accessGroup, CancellationToken cancellationToken = default)
-    {
-        accessGroup.Members.Add(user);
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
 }
 

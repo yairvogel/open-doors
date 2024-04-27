@@ -10,7 +10,7 @@ using OpenDoors.Service.Interfaces;
 namespace OpenDoors.Service.Controllers;
 
 [ApiController]
-public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, ITenantManager tenantManager) : ControllerBase
+public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, ITenantManager tenantManager, IAccessGroupManager accessGroupManager) : ControllerBase
 {
     private static readonly EmailAddressAttribute _emailValidator = new();
 
@@ -36,12 +36,7 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
             tenant = await tenantManager.CreateAsync(new Tenant { Name = registerRequest.Tenant });
         }
 
-        TenantUser user = new TenantUser
-        {
-            Email = email,
-            Tenant = tenant,
-            UserName = email
-        };
+        TenantUser user = new TenantUser { Email = email, Tenant = tenant, UserName = email };
 
         IdentityResult result = await userManager.CreateAsync(user, registerRequest.Password);
         if (!result.Succeeded)
@@ -49,8 +44,8 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
             return BadRequest(result.Errors.ToList());
         }
 
-        AccessGroup defaultAccessGroup = await tenantManager.GetDefaultAccessGroup(tenant.Id!.Value);
-        await tenantManager.AddUserToAccessGroup(user, defaultAccessGroup);
+        AccessGroup defaultAccessGroup = await accessGroupManager.GetDefaultAccessGroup(tenant.Id!.Value);
+        await accessGroupManager.AddUserToAccessGroup(user.Id, defaultAccessGroup);
 
         await userManager.AddClaimAsync(user, new Claim(AuthorizationConstants.TenantClaimType, tenant.Id.ToString()!));
         if (registerRequest.Admin)

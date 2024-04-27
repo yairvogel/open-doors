@@ -28,11 +28,16 @@ builder.Services.AddIdentityCore<TenantUser>()
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 
+builder.Services.AddScoped<ITenantManager, TenantManager>();
+builder.Services.AddScoped<IAccessGroupManager, AccessGroupManager>();
+builder.Services.AddSingleton<IExternalDoorService, ExternalDoorServiceMock>();
+builder.Services.AddScoped<IDoorService, DoorService>();
+
+
 builder.Services.AddScoped<DoorHandler>();
+builder.Services.AddScoped<AccessGroupsHandler>();
 
 builder.Services.AddAuthorizationPolicies();
-
-builder.Services.AddScoped<ITenantManager, TenantManager>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

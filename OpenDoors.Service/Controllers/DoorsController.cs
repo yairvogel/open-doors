@@ -15,7 +15,7 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
     public async Task<IActionResult> CreateDoor([FromBody] CreateDoorRequest createDoorRequest)
     {
         Guid tenantId = HttpContext.User.GetTenantId();
-        await doorHandler.CreateDoor(createDoorRequest.location, tenantId);
+        await doorHandler.CreateDoor(createDoorRequest.Location, tenantId, createDoorRequest.AccessGroupName);
         return Created();
     }
 
@@ -31,5 +31,5 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
     }
 }
 
-public record CreateDoorRequest(string location);
+public record CreateDoorRequest(string Location, string? AccessGroupName);
 public record DoorDto(int Id, string Location);
