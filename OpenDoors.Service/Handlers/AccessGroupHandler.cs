@@ -34,7 +34,7 @@ public class AccessGroupsHandler(IAccessGroupManager accessGroupManager, ILogger
             return null;
         }
 
-        if (accessGroup.Tenant.Id != tenantId)
+        if (accessGroup.TenantId != tenantId)
         {
             logger.LogWarning($"requested access group from different tenant. access group id: {accessGroup}, tenantId: {tenantId}");
             return null;

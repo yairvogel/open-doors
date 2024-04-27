@@ -53,6 +53,11 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
             await userManager.AddToRoleAsync(user, AuthorizationConstants.AdminRole);
         }
 
+        if (registerRequest.Auditor)
+        {
+            await userManager.AddToRoleAsync(user, AuthorizationConstants.AuditorRole);
+        }
+
         return Ok();
     }
 
@@ -73,6 +78,6 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
     }
 }
 
-public record RegisterRequest(string Email, string Password, string Tenant, bool Admin = false);
+public record RegisterRequest(string Email, string Password, string Tenant, bool Admin = false, bool Auditor = false);
 
 public record LoginRequest(string Email, string Password);

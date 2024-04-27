@@ -4,12 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using OpenDoors.Model.Authentication;
 using OpenDoors.Service;
 using OpenDoors.Service.Authorization;
-using OpenDoors.Service.Controllers;
 using OpenDoors.Service.Handlers;
 using OpenDoors.Service.Interfaces;
 using OpenDoors.Service.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddDbContext<OpenDoorsContext>(options =>
 {
@@ -18,12 +20,10 @@ builder.Services.AddDbContext<OpenDoorsContext>(options =>
     options.UseSqlite($"Data Source={dbPath}");
 });
 
-builder.Services.AddSingleton<IAuthorizationHandler, AllowedEntryHandler>();
-
 builder.Services.AddIdentityCore<TenantUser>()
     .AddRoles<TenantRole>()
     .AddEntityFrameworkStores<OpenDoorsContext>()
-    .AddApiEndpoints(); // TODO: do I need this?
+    .AddApiEndpoints();
 
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
@@ -32,11 +32,12 @@ builder.Services.AddScoped<ITenantManager, TenantManager>();
 builder.Services.AddScoped<IAccessGroupManager, AccessGroupManager>();
 builder.Services.AddSingleton<IExternalDoorService, ExternalDoorServiceMock>();
 builder.Services.AddScoped<IDoorService, DoorService>();
-
+builder.Services.AddScoped<IEntryLogger, EntryLogger>();
 
 builder.Services.AddScoped<DoorHandler>();
 builder.Services.AddScoped<AccessGroupsHandler>();
 
+builder.Services.AddScoped<IAuthorizationHandler, AuditorAuthorizationHandler>();
 builder.Services.AddAuthorizationPolicies();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -48,6 +49,19 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.Use(next => async context =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (Exception e)
+    {
+        context.Response.StatusCode = e is ArgumentException ? StatusCodes.Status400BadRequest : StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsync(e.Message);
+    }
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -14,9 +14,12 @@ public class OpenDoorsContext(DbContextOptions options) : IdentityDbContext<Tena
 
     public DbSet<Door> Doors { get; set; } = null!;
 
+    public DbSet<EntryLog> Log { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
         builder.Entity<TenantUser>()
             .HasMany(u => u.AccessGroups)
             .WithMany(g => g.Members)

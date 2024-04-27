@@ -8,7 +8,13 @@ public interface IDoorService
 
     Task<IReadOnlyList<Door>> ListDoorsForUser(string userId);
 
-    Task<OpenDoorResult> OpenDoor(int doorId);
+    Task<bool> OpenDoor(int doorId);
 }
 
-public class OpenDoorResult(bool Succeeded, Exception? Error);
+public record OpenDoorResult(bool Succeeded, int DoorId, string UserId, FailureReason? FailureReason);
+
+public enum FailureReason
+{
+    Unauthorized,
+    ExternalError
+}

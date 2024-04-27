@@ -6,8 +6,6 @@ namespace OpenDoors.Service.Services;
 
 public class DoorService(OpenDoorsContext dbContext, IExternalDoorService externalDoorService) : IDoorService
 {
-    private static readonly OpenDoorResult _successResult = new(true, null);
-
     public async Task CreateDoor(string location, AccessGroup accessGroup)
     {
         Door door = new Door { Location = location, AccessGroups = [accessGroup] };
@@ -29,16 +27,16 @@ public class DoorService(OpenDoorsContext dbContext, IExternalDoorService extern
         return doors.Distinct().ToList();
     }
 
-    public async Task<OpenDoorResult> OpenDoor(int doorId)
+    public async Task<bool> OpenDoor(int doorId)
     {
         try
         {
             await externalDoorService.OpenDoor(doorId);
-            return _successResult;
+            return true;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            return new OpenDoorResult(false, e);
+            return false;
         }
     }
 }

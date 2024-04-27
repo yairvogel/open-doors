@@ -16,7 +16,7 @@ public class AccessGroupManager(OpenDoorsContext dbContext) : IAccessGroupManage
 
     public async Task<AccessGroup?> GetAccessGroup(Guid accessGroupId, bool detailed = false)
     {
-        IQueryable<AccessGroup> query = dbContext.AccessGroups.Where(g => g.Id == accessGroupId).Include(g => g.Tenant);
+        IQueryable<AccessGroup> query = dbContext.AccessGroups.Where(g => g.Id == accessGroupId);
         if (detailed)
         {
             query = query.Include(g => g.Members).Include(g => g.Doors);

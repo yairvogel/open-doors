@@ -4,7 +4,7 @@ using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Handlers;
 
-public class DoorHandler(IAccessGroupManager accessGroupManager, IDoorService doorService)
+public class DoorHandler(IAccessGroupManager accessGroupManager, IDoorService doorService, IEntryLogger entryLogger)
 {
     public async Task CreateDoor(string location, Guid tenantId, string? accessGroupName = null)
     {
@@ -20,10 +20,30 @@ public class DoorHandler(IAccessGroupManager accessGroupManager, IDoorService do
         return doorService.ListDoorsForUser(userId);
     }
 
-    public async Task<OpenDoorResult> OpenDoor(int doorId)
+    public async Task<OpenDoorResult> OpenDoor(int doorId, string userId, Guid tenantId)
     {
-        OpenDoorResult result = await doorService.OpenDoor(doorId);
-        // log
-        return result;
+        bool allowedEntry = await IsAllowedEntry(doorId, userId);
+        if (!allowedEntry)
+        {
+            await entryLogger.LogUnauthorized(doorId, userId, tenantId);
+            return new OpenDoorResult(false, doorId, userId, FailureReason.Unauthorized);
+        }
+
+        bool success = await doorService.OpenDoor(doorId);
+
+        if (!success)
+        {
+            await entryLogger.LogFailure(doorId, userId, tenantId);
+            return new OpenDoorResult(false, doorId, userId, FailureReason.ExternalError);
+        }
+
+        await entryLogger.LogSuccess(doorId, userId, tenantId);
+        return new OpenDoorResult(true, doorId, userId, null);
+    }
+
+    public async Task<bool> IsAllowedEntry(int doorId, string userId)
+    {
+        IReadOnlyList<Door> doors = await doorService.ListDoorsForUser(userId);
+        return doors.Any(d => d.Id == doorId);
     }
 }

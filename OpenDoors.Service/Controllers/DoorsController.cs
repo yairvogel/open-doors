@@ -3,14 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using OpenDoors.Model;
 using OpenDoors.Service.Authorization;
 using OpenDoors.Service.Handlers;
+using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Controllers;
 
 [ApiController]
+[Route("/doors")]
 public class DoorsController(DoorHandler doorHandler) : ControllerBase
 {
     [HttpPost]
-    [Route("/doors")]
     [Authorize(AuthorizationConstants.TenantAdminPolicy)]
     public async Task<IActionResult> CreateDoor([FromBody] CreateDoorRequest createDoorRequest)
     {
@@ -20,7 +21,6 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
     }
 
     [HttpGet]
-    [Route("/doors")]
     [Authorize(AuthorizationConstants.HasTenantPolicy)]
     public async Task<IActionResult> ListDoors()
     {
@@ -28,6 +28,21 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
         IReadOnlyList<Door> doors = await doorHandler.ListDoorsForUser(userId);
         IReadOnlyList<DoorDto> doorDtos = doors.Select(d => new DoorDto(d.Id, d.Location)).ToList();
         return Ok(doorDtos);
+    }
+
+    [HttpGet("open/{id}")]
+    [Authorize(AuthorizationConstants.HasTenantPolicy)]
+    public async Task<IActionResult> OpenDoor(int id)
+    {
+        Guid tenantId = HttpContext.User.GetTenantId();
+        string userId = HttpContext.User.GetUserId();
+        OpenDoorResult result = await doorHandler.OpenDoor(id, userId, tenantId);
+        if (result.Succeeded)
+        {
+            return Ok();
+        }
+
+        return BadRequest(result.FailureReason.ToString());
     }
 }
 

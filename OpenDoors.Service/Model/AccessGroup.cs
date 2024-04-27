@@ -1,4 +1,5 @@
 
+using System.ComponentModel.DataAnnotations.Schema;
 using OpenDoors.Model.Authentication;
 
 namespace OpenDoors.Model;
@@ -14,4 +15,8 @@ public class AccessGroup
     public required ICollection<TenantUser> Members { get; set; } = [];
 
     public required Tenant Tenant { get; set; }
+
+    [ForeignKey("Tenant")]
+    public Guid? TenantId { get; set; }
+
 }
