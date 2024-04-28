@@ -14,13 +14,24 @@ public class DoorService(OpenDoorsContext dbContext, IExternalDoorService extern
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task<IReadOnlyList<Door>> ListDoorsForTenant(Guid tenantId)
+    {
+        List<Door> doors = await dbContext.AccessGroups
+            .Where(g => g.TenantId == tenantId)
+            .Include(g => g.Doors)
+            .SelectMany(g => g.Doors)
+            .ToListAsync();
+
+        return doors.Distinct().ToList();
+    }
+
     public async Task<IReadOnlyList<Door>> ListDoorsForUser(string userId)
     {
-        var doors = await dbContext.Users
+        List<Door> doors = await dbContext.Users
             .Where(u => u.Id == userId)
-            .Include(u => u.AccessGroups).AsQueryable()
+            .Include(u => u.AccessGroups)
             .SelectMany(u => u.AccessGroups)
-            .Include(g => g.Doors).AsQueryable()
+            .Include(g => g.Doors)
             .SelectMany(g => g.Doors)
             .ToListAsync();
 

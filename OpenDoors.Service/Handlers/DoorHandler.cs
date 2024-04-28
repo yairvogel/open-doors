@@ -15,9 +15,11 @@ public class DoorHandler(IAccessGroupManager accessGroupManager, IDoorService do
         await doorService.CreateDoor(location, accessGroup);
     }
 
-    public Task<IReadOnlyList<Door>> ListDoorsForUser(string userId)
+    public Task<IReadOnlyList<Door>> ListDoors(string userId, Guid tenantId, bool isAdmin)
     {
-        return doorService.ListDoorsForUser(userId);
+        return isAdmin 
+            ? doorService.ListDoorsForTenant(tenantId)
+            : doorService.ListDoorsForUser(userId);
     }
 
     public async Task<OpenDoorResult> OpenDoor(int doorId, string userId, Guid tenantId)

@@ -25,7 +25,9 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
     public async Task<IActionResult> ListDoors()
     {
         string userId = HttpContext.User.GetUserId();
-        IReadOnlyList<Door> doors = await doorHandler.ListDoorsForUser(userId);
+        Guid tenantId = HttpContext.User.GetTenantId();
+        bool isAdmin = HttpContext.User.IsInRole(AuthorizationConstants.AdminRole);
+        IReadOnlyList<Door> doors = await doorHandler.ListDoors(userId, tenantId, isAdmin);
         IReadOnlyList<DoorDto> doorDtos = doors.Select(d => new DoorDto(d.Id, d.Location)).ToList();
         return Ok(doorDtos);
     }
@@ -42,7 +44,12 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
             return Ok();
         }
 
-        return BadRequest(result.FailureReason.ToString());
+        return result.FailureReason switch 
+        {
+            FailureReason.Unauthorized => Unauthorized(),
+            FailureReason.ExternalError => BadRequest(),
+            _ => throw new ArgumentOutOfRangeException("unreachable")
+        };
     }
 }
 

@@ -8,6 +8,8 @@ public interface IDoorService
 
     Task<IReadOnlyList<Door>> ListDoorsForUser(string userId);
 
+    Task<IReadOnlyList<Door>> ListDoorsForTenant(Guid tenantId);
+
     Task<bool> OpenDoor(int doorId);
 }
 

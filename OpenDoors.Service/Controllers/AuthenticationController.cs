@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OpenDoors.Model;
@@ -61,8 +62,7 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
         return Ok();
     }
 
-    [HttpPost]
-    [Route("/login")]
+    [HttpPost("/login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest loginRequest)
     {
         signInManager.AuthenticationScheme = IdentityConstants.ApplicationScheme;
@@ -76,8 +76,18 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
 
         return Empty;
     }
+
+    [HttpGet("/user")]
+    [Authorize(AuthorizationConstants.HasTenantPolicy)]
+    public IActionResult GetCurrentUser()
+    {
+        Guid tenantId = HttpContext.User.GetTenantId();
+        string userId = HttpContext.User.GetUserId();
+        return Ok(new CurrentUserDto(userId, HttpContext.User.FindFirst(ClaimTypes.Email)!.Value, tenantId.ToString()));
+    }
 }
 
 public record RegisterRequest(string Email, string Password, string Tenant, bool Admin = false, bool Auditor = false);
 
 public record LoginRequest(string Email, string Password);
+public record CurrentUserDto(string UserId, string Email, string Tenant);
