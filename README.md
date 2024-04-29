@@ -3,12 +3,12 @@ An API service that allows users to open doors.
 
 ## Running
 1. Make sure you have dotnet installed. [link](https://dotnet.microsoft.com/en-us/download)
-2. Install entity framework core `dotnet tool install --global ef`
+2. Install entity framework core `dotnet tool install --global dotnet-ef`
 3. The service relies on a sqlite database. create it using `dotnet ef database update --project OpenDoors.Service`
 4. Run the service with `dotnet run --project OpenDoors.Service`
 
 
-## summary
+## Summary
 This is a sample api allows users to open doors using an app or straight up api. 
 The api is a multi tenant app, backed a (sqlite) database, that exposes a door 
 opening api, a log api and some related management apis.
