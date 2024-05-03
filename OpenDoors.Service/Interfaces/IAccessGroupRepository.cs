@@ -2,7 +2,7 @@ using OpenDoors.Model;
 
 namespace OpenDoors.Service.Interfaces;
 
-public interface IAccessGroupManager
+public interface IAccessGroupRepository
 {
     Task<AccessGroup> GetDefaultAccessGroup(Guid tenantId);
 

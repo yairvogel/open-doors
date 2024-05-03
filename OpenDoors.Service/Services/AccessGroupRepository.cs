@@ -5,7 +5,7 @@ using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Services;
 
-public class AccessGroupManager(OpenDoorsContext dbContext) : IAccessGroupManager
+public class AccessGroupRepository(OpenDoorsContext dbContext) : IAccessGroupRepository
 {
     public async Task<AccessGroup> GetDefaultAccessGroup(Guid tenantId)
     {

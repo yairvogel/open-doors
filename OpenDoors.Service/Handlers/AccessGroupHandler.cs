@@ -5,30 +5,30 @@ using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Handlers;
 
-public class AccessGroupsHandler(IAccessGroupManager accessGroupManager, ILogger<AccessGroupsHandler> logger)
+public class AccessGroupsHandler(IAccessGroupRepository accessGroupRepository, ILogger<AccessGroupsHandler> logger)
 {
     public Task<IReadOnlyList<AccessGroup>> GetAccessGroupsForUser(string userId, Guid tenantId, bool isAdmin)
     {
         return isAdmin 
-            ? accessGroupManager.GetAccessGroupsForTenant(tenantId) 
-            : accessGroupManager.GetAccessGroupsForUser(userId);
+            ? accessGroupRepository.GetAccessGroupsForTenant(tenantId) 
+            : accessGroupRepository.GetAccessGroupsForUser(userId);
     }
 
     public async Task<bool> CreateAccessGroup(string name, Guid tenantId)
     {
-        IReadOnlyList<AccessGroup> accessGroups = await accessGroupManager.GetAccessGroupsForTenant(tenantId);
+        IReadOnlyList<AccessGroup> accessGroups = await accessGroupRepository.GetAccessGroupsForTenant(tenantId);
         if (accessGroups.Any(g => g.Name.Equals(name, StringComparison.OrdinalIgnoreCase)))
         {
             return false;
         }
 
-        await accessGroupManager.CreateAccessGroup(name, tenantId);
+        await accessGroupRepository.CreateAccessGroup(name, tenantId);
         return true;
     }
 
     public async Task<AccessGroup?> GetAccessGroup(Guid groupId, string userId, Guid tenantId, bool isAdmin)
     {
-        AccessGroup? accessGroup = await accessGroupManager.GetAccessGroup(groupId, detailed: true);
+        AccessGroup? accessGroup = await accessGroupRepository.GetAccessGroup(groupId, detailed: true);
         if (accessGroup is null)
         {
             return null;
@@ -56,7 +56,7 @@ public class AccessGroupsHandler(IAccessGroupManager accessGroupManager, ILogger
             throw new ArgumentException("access group id is not a valid id");
         }
 
-        AccessGroup? accessGroup = await accessGroupManager.GetAccessGroup(accessGroupId, detailed: true);
+        AccessGroup? accessGroup = await accessGroupRepository.GetAccessGroup(accessGroupId, detailed: true);
         if (accessGroup is null)
         {
             throw new AccessGroupNotFoundException("group with id {accessGroupId} was not found");
@@ -70,14 +70,14 @@ public class AccessGroupsHandler(IAccessGroupManager accessGroupManager, ILogger
         IEnumerable<string> droppedMemberIds = accessGroup.Members.Select(m => m.Id).Except(dto.MemberIds);
         foreach (string droppedMemberId in droppedMemberIds)
         {
-            await accessGroupManager.RemoveUserFromGroup(droppedMemberId, accessGroup);
+            await accessGroupRepository.RemoveUserFromGroup(droppedMemberId, accessGroup);
         }
 
 
         IEnumerable<string> newMemberIds = dto.MemberIds.Except(accessGroup.Members.Select(m => m.Id));
         foreach (string newMemeberId in newMemberIds)
         {
-            await accessGroupManager.AddUserToAccessGroup(newMemeberId, accessGroup);
+            await accessGroupRepository.AddUserToAccessGroup(newMemeberId, accessGroup);
         }
     }
 }

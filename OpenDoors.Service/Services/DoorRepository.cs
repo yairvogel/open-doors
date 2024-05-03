@@ -4,14 +4,13 @@ using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Services;
 
-public class DoorService(OpenDoorsContext dbContext, IExternalDoorService externalDoorService) : IDoorService
+public class DoorRepository(OpenDoorsContext dbContext) : IDoorRepository
 {
     public async Task CreateDoor(string location, AccessGroup accessGroup)
     {
         Door door = new Door { Location = location, AccessGroups = [accessGroup] };
 
         await dbContext.AddAsync(door);
-        await dbContext.SaveChangesAsync();
     }
 
     public async Task<IReadOnlyList<Door>> ListDoorsForTenant(Guid tenantId)
@@ -36,18 +35,5 @@ public class DoorService(OpenDoorsContext dbContext, IExternalDoorService extern
             .ToListAsync();
 
         return doors.Distinct().ToList();
-    }
-
-    public async Task<bool> OpenDoor(int doorId)
-    {
-        try
-        {
-            await externalDoorService.OpenDoor(doorId);
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
     }
 }

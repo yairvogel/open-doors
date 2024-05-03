@@ -11,7 +11,7 @@ using OpenDoors.Service.Interfaces;
 namespace OpenDoors.Service.Controllers;
 
 [ApiController]
-public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, ITenantManager tenantManager, IAccessGroupManager accessGroupManager) : ControllerBase
+public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, ITenantManager tenantManager, IAccessGroupRepository accessGroupRepository) : ControllerBase
 {
     private static readonly EmailAddressAttribute _emailValidator = new();
 
@@ -45,8 +45,8 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
             return BadRequest(result.Errors.ToList());
         }
 
-        AccessGroup defaultAccessGroup = await accessGroupManager.GetDefaultAccessGroup(tenant.Id!.Value);
-        await accessGroupManager.AddUserToAccessGroup(user.Id, defaultAccessGroup);
+        AccessGroup defaultAccessGroup = await accessGroupRepository.GetDefaultAccessGroup(tenant.Id!.Value);
+        await accessGroupRepository.AddUserToAccessGroup(user.Id, defaultAccessGroup);
 
         await userManager.AddClaimAsync(user, new Claim(AuthorizationConstants.TenantClaimType, tenant.Id.ToString()!));
         if (registerRequest.Admin)

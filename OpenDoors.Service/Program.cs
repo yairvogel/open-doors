@@ -29,9 +29,9 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddIdentityCookies();
 
 builder.Services.AddScoped<ITenantManager, TenantManager>();
-builder.Services.AddScoped<IAccessGroupManager, AccessGroupManager>();
+builder.Services.AddScoped<IAccessGroupRepository, AccessGroupRepository>();
 builder.Services.AddSingleton<IExternalDoorService, ExternalDoorServiceMock>();
-builder.Services.AddScoped<IDoorService, DoorService>();
+builder.Services.AddScoped<IDoorRepository, DoorRepository>();
 builder.Services.AddScoped<IEntryLogger, EntryLogger>();
 
 builder.Services.AddScoped<DoorHandler>();

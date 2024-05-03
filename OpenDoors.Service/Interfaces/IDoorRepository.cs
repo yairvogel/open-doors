@@ -2,15 +2,13 @@ using OpenDoors.Model;
 
 namespace OpenDoors.Service.Interfaces;
 
-public interface IDoorService
+public interface IDoorRepository
 {
     Task CreateDoor(string location, AccessGroup accessGroup);
 
     Task<IReadOnlyList<Door>> ListDoorsForUser(string userId);
 
     Task<IReadOnlyList<Door>> ListDoorsForTenant(Guid tenantId);
-
-    Task<bool> OpenDoor(int doorId);
 }
 
 public record OpenDoorResult(bool Succeeded, int DoorId, string UserId, FailureReason? FailureReason);

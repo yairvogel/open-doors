@@ -4,22 +4,22 @@ using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Handlers;
 
-public class DoorHandler(IAccessGroupManager accessGroupManager, IDoorService doorService, IEntryLogger entryLogger)
+public class DoorHandler(IAccessGroupRepository accessGroupRepository, IDoorRepository doorRepository, IExternalDoorService externalDoorService, IEntryLogger entryLogger)
 {
     public async Task CreateDoor(string location, Guid tenantId, string? accessGroupName = null)
     {
         AccessGroup accessGroup = accessGroupName is null 
-            ? await accessGroupManager.GetDefaultAccessGroup(tenantId)
-            : await accessGroupManager.GetAccessGroupByName(accessGroupName, tenantId) ?? throw new AccessGroupNotFoundException("access group does was not found");
+            ? await accessGroupRepository.GetDefaultAccessGroup(tenantId)
+            : await accessGroupRepository.GetAccessGroupByName(accessGroupName, tenantId) ?? throw new AccessGroupNotFoundException("access group does was not found");
 
-        await doorService.CreateDoor(location, accessGroup);
+        await doorRepository.CreateDoor(location, accessGroup);
     }
 
     public Task<IReadOnlyList<Door>> ListDoors(string userId, Guid tenantId, bool isAdmin)
     {
         return isAdmin 
-            ? doorService.ListDoorsForTenant(tenantId)
-            : doorService.ListDoorsForUser(userId);
+            ? doorRepository.ListDoorsForTenant(tenantId)
+            : doorRepository.ListDoorsForUser(userId);
     }
 
     public async Task<OpenDoorResult> OpenDoor(int doorId, string userId, Guid tenantId)
@@ -31,7 +31,7 @@ public class DoorHandler(IAccessGroupManager accessGroupManager, IDoorService do
             return new OpenDoorResult(false, doorId, userId, FailureReason.Unauthorized);
         }
 
-        bool success = await doorService.OpenDoor(doorId);
+        bool success = await externalDoorService.OpenDoor(doorId);
 
         if (!success)
         {
@@ -45,7 +45,7 @@ public class DoorHandler(IAccessGroupManager accessGroupManager, IDoorService do
 
     public async Task<bool> IsAllowedEntry(int doorId, string userId)
     {
-        IReadOnlyList<Door> doors = await doorService.ListDoorsForUser(userId);
+        IReadOnlyList<Door> doors = await doorRepository.ListDoorsForUser(userId);
         return doors.Any(d => d.Id == doorId);
     }
 }
