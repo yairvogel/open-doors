@@ -9,7 +9,7 @@ namespace OpenDoors.Service.Controllers;
 
 [ApiController]
 [Route("/doors")]
-public class DoorsController(DoorHandler doorHandler) : ControllerBase
+public class DoorsController(DoorHandler doorHandler, IAuthorizationService authorizationService, IEntryLogger entryLogger) : ControllerBase
 {
     [HttpPost]
     [Authorize(AuthorizationConstants.TenantAdminPolicy)]
@@ -36,20 +36,25 @@ public class DoorsController(DoorHandler doorHandler) : ControllerBase
     [Authorize(AuthorizationConstants.HasTenantPolicy)]
     public async Task<IActionResult> OpenDoor(int id)
     {
-        Guid tenantId = HttpContext.User.GetTenantId();
         string userId = HttpContext.User.GetUserId();
-        OpenDoorResult result = await doorHandler.OpenDoor(id, userId, tenantId);
+        Guid tenantId = HttpContext.User.GetTenantId();
+        var authResult = await authorizationService.AuthorizeAsync(HttpContext.User, null, [ new AllowedEntryAuthorizationRequirement(id) ]);
+        if (!authResult.Succeeded)
+        {
+            await entryLogger.LogUnauthorized(id, userId, tenantId);
+            return Unauthorized();
+        }
+
+        OpenDoorResult result = await doorHandler.OpenDoor(id, userId);
         if (result.Succeeded)
         {
+            await entryLogger.LogSuccess(id, userId, tenantId);
             return Ok();
         }
 
-        return result.FailureReason switch 
-        {
-            FailureReason.Unauthorized => Unauthorized(),
-            FailureReason.ExternalError => BadRequest(),
-            _ => throw new ArgumentOutOfRangeException("unreachable")
-        };
+        await entryLogger.LogFailure(id, userId, tenantId);
+        // gaslighting the user
+        return BadRequest();
     }
 }
 

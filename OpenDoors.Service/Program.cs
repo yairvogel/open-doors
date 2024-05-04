@@ -38,6 +38,7 @@ builder.Services.AddScoped<DoorHandler>();
 builder.Services.AddScoped<AccessGroupsHandler>();
 
 builder.Services.AddScoped<IAuthorizationHandler, AuditorAuthorizationHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, AllowedEntryAuthorizationHandler>();
 builder.Services.AddAuthorizationPolicies();
 
 builder.Services.AddEndpointsApiExplorer();

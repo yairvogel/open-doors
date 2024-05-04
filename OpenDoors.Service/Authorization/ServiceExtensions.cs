@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-
 namespace OpenDoors.Service.Authorization;
 
 public static class ServiceExtensions

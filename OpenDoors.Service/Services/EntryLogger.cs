@@ -58,5 +58,6 @@ public class EntryLogger(OpenDoorsContext dbContext) : IEntryLogger
     private async Task LogResult(EntryLog log)
     {
         await dbContext.AddAsync(log);
+        await dbContext.SaveChangesAsync();
     }
 }

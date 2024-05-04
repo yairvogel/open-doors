@@ -22,30 +22,10 @@ public class DoorHandler(IAccessGroupRepository accessGroupRepository, IDoorRepo
             : doorRepository.ListDoorsForUser(userId);
     }
 
-    public async Task<OpenDoorResult> OpenDoor(int doorId, string userId, Guid tenantId)
+    public async Task<OpenDoorResult> OpenDoor(int doorId, string userId)
     {
-        bool allowedEntry = await IsAllowedEntry(doorId, userId);
-        if (!allowedEntry)
-        {
-            await entryLogger.LogUnauthorized(doorId, userId, tenantId);
-            return new OpenDoorResult(false, doorId, userId, FailureReason.Unauthorized);
-        }
-
-        bool success = await externalDoorService.OpenDoor(doorId);
-
-        if (!success)
-        {
-            await entryLogger.LogFailure(doorId, userId, tenantId);
-            return new OpenDoorResult(false, doorId, userId, FailureReason.ExternalError);
-        }
-
-        await entryLogger.LogSuccess(doorId, userId, tenantId);
-        return new OpenDoorResult(true, doorId, userId, null);
-    }
-
-    public async Task<bool> IsAllowedEntry(int doorId, string userId)
-    {
-        IReadOnlyList<Door> doors = await doorRepository.ListDoorsForUser(userId);
-        return doors.Any(d => d.Id == doorId);
+        return await externalDoorService.OpenDoor(doorId)
+            ? new OpenDoorResult(false, doorId, userId, FailureReason.ExternalError)
+            : new OpenDoorResult(true, doorId, userId, null);
     }
 }

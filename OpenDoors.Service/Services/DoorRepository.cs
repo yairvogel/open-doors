@@ -11,6 +11,7 @@ public class DoorRepository(OpenDoorsContext dbContext) : IDoorRepository
         Door door = new Door { Location = location, AccessGroups = [accessGroup] };
 
         await dbContext.AddAsync(door);
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task<IReadOnlyList<Door>> ListDoorsForTenant(Guid tenantId)
