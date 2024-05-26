@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpenDoors.Model;
 using OpenDoors.Service.Authorization;
-using OpenDoors.Service.Interfaces;
+using OpenDoors.Service.DbOperations;
 
 namespace OpenDoors.Service.Controllers;
 
 [ApiController]
-public class LogController(IEntryLogger entryLogger) : ControllerBase
+public class LogController(EntryLogger entryLogger) : ControllerBase
 {
     [HttpGet("log")]
     [Authorize(AuthorizationConstants.AuditorPolicy)]

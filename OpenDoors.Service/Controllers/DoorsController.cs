@@ -2,21 +2,32 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OpenDoors.Model;
 using OpenDoors.Service.Authorization;
-using OpenDoors.Service.Handlers;
+using OpenDoors.Service.DbOperations;
 using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Controllers;
 
 [ApiController]
 [Route("/doors")]
-public class DoorsController(DoorHandler doorHandler, IAuthorizationService authorizationService, IEntryLogger entryLogger) : ControllerBase
+public class DoorsController(OpenDoorsContext dbContext, IAuthorizationService authorizationService, EntryLogger entryLogger, IExternalDoorService externalDoorService) : ControllerBase
 {
     [HttpPost]
     [Authorize(AuthorizationConstants.TenantAdminPolicy)]
     public async Task<IActionResult> CreateDoor([FromBody] CreateDoorRequest createDoorRequest)
     {
+        (string location, string? accessGroupName) = createDoorRequest;
         Guid tenantId = HttpContext.User.GetTenantId();
-        await doorHandler.CreateDoor(createDoorRequest.Location, tenantId, createDoorRequest.AccessGroupName);
+        AccessGroup? accessGroup = accessGroupName is null 
+            ? await dbContext.GetDefaultAccessGroup(tenantId)
+            : await dbContext.GetAccessGroupByName(accessGroupName, tenantId);
+
+        if (accessGroup is null)
+        {
+            return BadRequest($"Access Group with name {accessGroupName} was not found");
+        }
+
+        await dbContext.CreateDoor(createDoorRequest.Location, accessGroup);
+        await dbContext.SaveChangesAsync();
         return Created();
     }
 
@@ -27,7 +38,11 @@ public class DoorsController(DoorHandler doorHandler, IAuthorizationService auth
         string userId = HttpContext.User.GetUserId();
         Guid tenantId = HttpContext.User.GetTenantId();
         bool isAdmin = HttpContext.User.IsInRole(AuthorizationConstants.AdminRole);
-        IReadOnlyList<Door> doors = await doorHandler.ListDoors(userId, tenantId, isAdmin);
+
+        IReadOnlyList<Door> doors = isAdmin 
+            ? await dbContext.ListDoorsForTenant(tenantId)
+            : await dbContext.ListDoorsForUser(userId);
+
         IReadOnlyList<DoorDto> doorDtos = doors.Select(d => new DoorDto(d.Id, d.Location)).ToList();
         return Ok(doorDtos);
     }
@@ -45,8 +60,8 @@ public class DoorsController(DoorHandler doorHandler, IAuthorizationService auth
             return Unauthorized();
         }
 
-        OpenDoorResult result = await doorHandler.OpenDoor(id, userId);
-        if (result.Succeeded)
+        bool success = await externalDoorService.OpenDoor(id);
+        if (success)
         {
             await entryLogger.LogSuccess(id, userId, tenantId);
             return Ok();

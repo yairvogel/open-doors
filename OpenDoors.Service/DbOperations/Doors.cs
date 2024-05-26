@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using OpenDoors.Model;
-using OpenDoors.Service.Interfaces;
 
-namespace OpenDoors.Service.Services;
+namespace OpenDoors.Service.DbOperations;
 
-public class DoorRepository(OpenDoorsContext dbContext) : IDoorRepository
+public static class DoorRepository
 {
-    public async Task CreateDoor(string location, AccessGroup accessGroup)
+    public static async Task CreateDoor(this OpenDoorsContext dbContext, string location, AccessGroup accessGroup)
     {
         Door door = new Door { Location = location, AccessGroups = [accessGroup] };
 
@@ -14,7 +13,7 @@ public class DoorRepository(OpenDoorsContext dbContext) : IDoorRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<IReadOnlyList<Door>> ListDoorsForTenant(Guid tenantId)
+    public static async Task<IReadOnlyList<Door>> ListDoorsForTenant(this OpenDoorsContext dbContext, Guid tenantId)
     {
         List<Door> doors = await dbContext.AccessGroups
             .Where(g => g.TenantId == tenantId)
@@ -25,7 +24,7 @@ public class DoorRepository(OpenDoorsContext dbContext) : IDoorRepository
         return doors.Distinct().ToList();
     }
 
-    public async Task<IReadOnlyList<Door>> ListDoorsForUser(string userId)
+    public static async Task<IReadOnlyList<Door>> ListDoorsForUser(this OpenDoorsContext dbContext, string userId)
     {
         List<Door> doors = await dbContext.Users
             .Where(u => u.Id == userId)

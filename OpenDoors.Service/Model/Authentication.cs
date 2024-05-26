@@ -1,4 +1,4 @@
-namespace OpenDoors.Model.Authentication;
+namespace OpenDoors.Model;
 
 using Microsoft.AspNetCore.Identity;
 

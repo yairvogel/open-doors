@@ -4,14 +4,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OpenDoors.Model;
-using OpenDoors.Model.Authentication;
 using OpenDoors.Service.Authorization;
-using OpenDoors.Service.Interfaces;
+using OpenDoors.Service.DbOperations;
+using OpenDoors.Service.Services;
 
-namespace OpenDoors.Service.Controllers;
+namespace OpenDoors.Service.Authentication;
 
 [ApiController]
-public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, ITenantManager tenantManager, IAccessGroupRepository accessGroupRepository) : ControllerBase
+public class AuthenticationController(SignInManager<TenantUser> signInManager, UserManager<TenantUser> userManager, TenantManager tenantManager, OpenDoorsContext dbContext) : ControllerBase
 {
     private static readonly EmailAddressAttribute _emailValidator = new();
 
@@ -45,9 +45,9 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
             return BadRequest(result.Errors.ToList());
         }
 
-        AccessGroup defaultAccessGroup = await accessGroupRepository.GetDefaultAccessGroup(tenant.Id!.Value);
-        await accessGroupRepository.AddUserToAccessGroup(user.Id, defaultAccessGroup);
+        AccessGroup defaultAccessGroup = await dbContext.GetDefaultAccessGroup(tenant.Id!.Value);
 
+        await dbContext.AddUserToAccessGroup(user.Id, defaultAccessGroup);
         await userManager.AddClaimAsync(user, new Claim(AuthorizationConstants.TenantClaimType, tenant.Id.ToString()!));
         if (registerRequest.Admin)
         {
@@ -88,6 +88,5 @@ public class AuthenticationController(SignInManager<TenantUser> signInManager, U
 }
 
 public record RegisterRequest(string Email, string Password, string Tenant, bool Admin = false, bool Auditor = false);
-
 public record LoginRequest(string Email, string Password);
 public record CurrentUserDto(string UserId, string Email, string Tenant);

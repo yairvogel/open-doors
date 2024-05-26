@@ -1,4 +1,4 @@
-namespace OpenDoors.Model.Authentication;
+namespace OpenDoors.Model;
 
 public class Tenant
 {

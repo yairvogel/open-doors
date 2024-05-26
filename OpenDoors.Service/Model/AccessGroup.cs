@@ -1,6 +1,5 @@
 
 using System.ComponentModel.DataAnnotations.Schema;
-using OpenDoors.Model.Authentication;
 
 namespace OpenDoors.Model;
 

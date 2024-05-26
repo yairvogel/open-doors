@@ -1,20 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using OpenDoors.Model;
-using OpenDoors.Model.Authentication;
-using OpenDoors.Service.Interfaces;
 
-namespace OpenDoors.Service.Services;
+namespace OpenDoors.Service.DbOperations;
 
-public class AccessGroupRepository(OpenDoorsContext dbContext) : IAccessGroupRepository
+public static class AccessGroupsDbOperations
 {
-    public async Task<AccessGroup> GetDefaultAccessGroup(Guid tenantId)
+    public static async Task<AccessGroup> GetDefaultAccessGroup(this OpenDoorsContext dbContext, Guid tenantId)
     {
         return await dbContext.AccessGroups
             .Where(g => g.Tenant.Id == tenantId && g.Name == "default")
             .FirstAsync();
     }
 
-    public async Task<AccessGroup?> GetAccessGroup(Guid accessGroupId, bool detailed = false)
+    public static async Task<AccessGroup?> GetAccessGroup(this OpenDoorsContext dbContext, Guid accessGroupId, bool detailed = false)
     {
         IQueryable<AccessGroup> query = dbContext.AccessGroups.Where(g => g.Id == accessGroupId);
         if (detailed)
@@ -25,19 +23,19 @@ public class AccessGroupRepository(OpenDoorsContext dbContext) : IAccessGroupRep
         return await query.FirstOrDefaultAsync();
     }
 
-    public Task<AccessGroup?> GetAccessGroupByName(string groupName, Guid tenantId)
+    public static Task<AccessGroup?> GetAccessGroupByName(this OpenDoorsContext dbContext, string groupName, Guid tenantId)
     {
         return dbContext.AccessGroups
             .Where(g => g.Name == groupName && g.Tenant.Id == tenantId)
             .FirstOrDefaultAsync();
     }
 
-    public async Task<IReadOnlyList<AccessGroup>> GetAccessGroupsForTenant(Guid tenantId)
+    public static async Task<IReadOnlyList<AccessGroup>> GetAccessGroupsForTenant(this OpenDoorsContext dbContext, Guid tenantId)
     {
         return await dbContext.AccessGroups.Where(g => g.Tenant.Id == tenantId).ToListAsync();
     }
 
-    public async Task<IReadOnlyList<AccessGroup>> GetAccessGroupsForUser(string userId)
+    public static async Task<IReadOnlyList<AccessGroup>> GetAccessGroupsForUser(this OpenDoorsContext dbContext, string userId)
     {
         return await dbContext.Users
             .Where(u => u.Id == userId)
@@ -46,7 +44,7 @@ public class AccessGroupRepository(OpenDoorsContext dbContext) : IAccessGroupRep
             .ToListAsync();
     }
 
-    public async Task CreateAccessGroup(string name, Guid tenantId)
+    public static async Task CreateAccessGroup(this OpenDoorsContext dbContext, string name, Guid tenantId)
     {
         Tenant? tenant = await dbContext.Tenants.Where(t => t.Id == tenantId).FirstOrDefaultAsync();
         if (tenant is null)
@@ -65,14 +63,14 @@ public class AccessGroupRepository(OpenDoorsContext dbContext) : IAccessGroupRep
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task AddUserToAccessGroup(string userId, AccessGroup accessGroup)
+    public static async Task AddUserToAccessGroup(this OpenDoorsContext dbContext, string userId, AccessGroup accessGroup)
     {
         TenantUser user = await dbContext.Users.Where(u => u.Id == userId).FirstAsync();
         accessGroup.Members.Add(user);
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task RemoveUserFromGroup(string droppedMemberId, AccessGroup accessGroup)
+    public static async Task RemoveUserFromGroup(this OpenDoorsContext dbContext, string droppedMemberId, AccessGroup accessGroup)
     {
         TenantUser member = accessGroup.Members.First(m => m.Id == droppedMemberId);
         accessGroup.Members.Remove(member);

@@ -1,13 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenDoors.Model;
-using OpenDoors.Model.Authentication;
 using OpenDoors.Service.Authorization;
-using OpenDoors.Service.Interfaces;
 
 namespace OpenDoors.Service.Services;
 
-public class TenantManager(OpenDoorsContext dbContext, RoleManager<TenantRole> roleManager) : ITenantManager
+public class TenantManager(OpenDoorsContext dbContext, RoleManager<TenantRole> roleManager)
 {
     public Task<Tenant?> GetByNameAsync(string tenantName, CancellationToken cancellationToken = default)
     {
